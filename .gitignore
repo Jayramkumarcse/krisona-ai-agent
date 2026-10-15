@@ -223,3 +223,15 @@ venv/
 __pycache__/
 *.py[cod]
 .env
+
+# Private local mission data; never commit user records
+.local_data/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Private local mission data; never commit user records
+.local_data/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
