@@ -1,0 +1,167 @@
+[
+  {
+    "id": "career_resume",
+    "description": "Prefer a practical resume task over a weaker alternative",
+    "expected_status": "recommended",
+    "expected_option_id": "resume",
+    "constraints": {},
+    "options": [
+      {
+        "id": "resume",
+        "description": "Prepare a targeted resume",
+        "goal_alignment": 5,
+        "feasibility": 5,
+        "safety": 5,
+        "cost_fit": 5,
+        "time_fit": 5,
+        "cost": 0,
+        "duration_days": 2,
+        "risks": []
+      },
+      {
+        "id": "course",
+        "description": "Take a general course",
+        "goal_alignment": 3,
+        "feasibility": 4,
+        "safety": 5,
+        "cost_fit": 4,
+        "time_fit": 3,
+        "cost": 500,
+        "duration_days": 14,
+        "risks": []
+      }
+    ]
+  },
+  {
+    "id": "budget_limit",
+    "description": "Reject an option that exceeds the budget",
+    "expected_status": "recommended",
+    "expected_option_id": "free",
+    "constraints": {"max_cost": 0},
+    "options": [
+      {
+        "id": "paid",
+        "description": "Buy an expensive course",
+        "goal_alignment": 5,
+        "feasibility": 5,
+        "safety": 5,
+        "cost_fit": 5,
+        "time_fit": 5,
+        "cost": 1000,
+        "duration_days": 2,
+        "risks": []
+      },
+      {
+        "id": "free",
+        "description": "Use free learning material",
+        "goal_alignment": 4,
+        "feasibility": 4,
+        "safety": 5,
+        "cost_fit": 5,
+        "time_fit": 4,
+        "cost": 0,
+        "duration_days": 3,
+        "risks": []
+      }
+    ]
+  },
+  {
+    "id": "unknown_cost",
+    "description": "Ask for missing cost before deciding",
+    "expected_status": "clarifying",
+    "expected_option_id": null,
+    "constraints": {"max_cost": 100},
+    "options": [
+      {
+        "id": "known",
+        "description": "Known affordable option",
+        "goal_alignment": 3,
+        "feasibility": 3,
+        "safety": 5,
+        "cost_fit": 5,
+        "time_fit": 3,
+        "cost": 50,
+        "duration_days": 4,
+        "risks": []
+      },
+      {
+        "id": "unknown",
+        "description": "Option with unknown cost",
+        "goal_alignment": 5,
+        "feasibility": 5,
+        "safety": 5,
+        "cost_fit": 4,
+        "time_fit": 4,
+        "cost": null,
+        "duration_days": 3,
+        "risks": []
+      }
+    ]
+  },
+  {
+    "id": "no_feasible_option",
+    "description": "Do not recommend options that exceed the budget",
+    "expected_status": "no_feasible_option",
+    "expected_option_id": null,
+    "constraints": {"max_cost": 10},
+    "options": [
+      {
+        "id": "expensive_a",
+        "description": "Expensive option A",
+        "goal_alignment": 5,
+        "feasibility": 4,
+        "safety": 5,
+        "cost_fit": 3,
+        "time_fit": 4,
+        "cost": 100,
+        "duration_days": 5,
+        "risks": []
+      },
+      {
+        "id": "expensive_b",
+        "description": "Expensive option B",
+        "goal_alignment": 4,
+        "feasibility": 4,
+        "safety": 5,
+        "cost_fit": 3,
+        "time_fit": 4,
+        "cost": 50,
+        "duration_days": 3,
+        "risks": []
+      }
+    ]
+  },
+  {
+    "id": "safety_limit",
+    "description": "Reject an option below the minimum safety rating",
+    "expected_status": "recommended",
+    "expected_option_id": "safer",
+    "constraints": {"min_safety": 4},
+    "options": [
+      {
+        "id": "unsafe",
+        "description": "Option with a low safety rating",
+        "goal_alignment": 5,
+        "feasibility": 5,
+        "safety": 1,
+        "cost_fit": 5,
+        "time_fit": 5,
+        "cost": 0,
+        "duration_days": 1,
+        "risks": ["Potential safety concern"]
+      },
+      {
+        "id": "safer",
+        "description": "Safer alternative",
+        "goal_alignment": 4,
+        "feasibility": 4,
+        "safety": 5,
+        "cost_fit": 5,
+        "time_fit": 4,
+        "cost": 0,
+        "duration_days": 2,
+        "risks": []
+      }
+    ]
+  }
+]
