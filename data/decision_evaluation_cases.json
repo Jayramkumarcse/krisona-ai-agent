@@ -37,7 +37,9 @@
     "description": "Reject an option that exceeds the budget",
     "expected_status": "recommended",
     "expected_option_id": "free",
-    "constraints": {"max_cost": 0},
+    "constraints": {
+      "max_cost": 0
+    },
     "options": [
       {
         "id": "paid",
@@ -70,7 +72,9 @@
     "description": "Ask for missing cost before deciding",
     "expected_status": "clarifying",
     "expected_option_id": null,
-    "constraints": {"max_cost": 100},
+    "constraints": {
+      "max_cost": 100
+    },
     "options": [
       {
         "id": "known",
@@ -103,7 +107,9 @@
     "description": "Do not recommend options that exceed the budget",
     "expected_status": "no_feasible_option",
     "expected_option_id": null,
-    "constraints": {"max_cost": 10},
+    "constraints": {
+      "max_cost": 10
+    },
     "options": [
       {
         "id": "expensive_a",
@@ -136,7 +142,9 @@
     "description": "Reject an option below the minimum safety rating",
     "expected_status": "recommended",
     "expected_option_id": "safer",
-    "constraints": {"min_safety": 4},
+    "constraints": {
+      "min_safety": 4
+    },
     "options": [
       {
         "id": "unsafe",
@@ -148,7 +156,9 @@
         "time_fit": 5,
         "cost": 0,
         "duration_days": 1,
-        "risks": ["Potential safety concern"]
+        "risks": [
+          "Potential safety concern"
+        ]
       },
       {
         "id": "safer",
@@ -160,6 +170,146 @@
         "time_fit": 4,
         "cost": 0,
         "duration_days": 2,
+        "risks": []
+      }
+    ]
+  },
+  {
+    "id": "english_speaking_budget",
+    "description": "Prefer free English speaking practice within a zero budget",
+    "expected_status": "recommended",
+    "expected_option_id": "free_practice",
+    "constraints": {
+      "max_cost": 0
+    },
+    "options": [
+      {
+        "id": "free_practice",
+        "description": "Practice speaking daily with free resources",
+        "goal_alignment": 5,
+        "feasibility": 5,
+        "safety": 5,
+        "cost_fit": 5,
+        "time_fit": 4,
+        "cost": 0,
+        "duration_days": 30,
+        "risks": []
+      },
+      {
+        "id": "paid_course",
+        "description": "Enroll in a paid speaking course",
+        "goal_alignment": 5,
+        "feasibility": 4,
+        "safety": 5,
+        "cost_fit": 2,
+        "time_fit": 4,
+        "cost": 5000,
+        "duration_days": 30,
+        "risks": []
+      }
+    ]
+  },
+  {
+    "id": "english_speaking_deadline",
+    "description": "Choose a practice plan that fits a 14-day deadline",
+    "expected_status": "recommended",
+    "expected_option_id": "short_practice",
+    "constraints": {
+      "max_duration_days": 14
+    },
+    "options": [
+      {
+        "id": "short_practice",
+        "description": "Follow a focused 14-day speaking routine",
+        "goal_alignment": 5,
+        "feasibility": 5,
+        "safety": 5,
+        "cost_fit": 5,
+        "time_fit": 5,
+        "cost": 0,
+        "duration_days": 14,
+        "risks": []
+      },
+      {
+        "id": "long_course",
+        "description": "Complete a 90-day speaking course",
+        "goal_alignment": 5,
+        "feasibility": 5,
+        "safety": 5,
+        "cost_fit": 5,
+        "time_fit": 5,
+        "cost": 0,
+        "duration_days": 90,
+        "risks": []
+      }
+    ]
+  },
+  {
+    "id": "no_feasible_free_option",
+    "description": "Abstain when every option exceeds the zero budget",
+    "expected_status": "no_feasible_option",
+    "expected_option_id": null,
+    "constraints": {
+      "max_cost": 0
+    },
+    "options": [
+      {
+        "id": "paid_tutor",
+        "description": "Hire a paid speaking tutor",
+        "goal_alignment": 5,
+        "feasibility": 4,
+        "safety": 5,
+        "cost_fit": 4,
+        "time_fit": 4,
+        "cost": 900,
+        "duration_days": 14,
+        "risks": []
+      },
+      {
+        "id": "paid_app",
+        "description": "Purchase a speaking practice subscription",
+        "goal_alignment": 4,
+        "feasibility": 5,
+        "safety": 5,
+        "cost_fit": 4,
+        "time_fit": 5,
+        "cost": 200,
+        "duration_days": 30,
+        "risks": []
+      }
+    ]
+  },
+  {
+    "id": "unknown_duration_clarification",
+    "description": "Ask for duration information when a strong option has unknown duration",
+    "expected_status": "clarifying",
+    "expected_option_id": null,
+    "constraints": {
+      "max_duration_days": 30
+    },
+    "options": [
+      {
+        "id": "known_duration",
+        "description": "Follow a 10-day speaking routine",
+        "goal_alignment": 3,
+        "feasibility": 3,
+        "safety": 5,
+        "cost_fit": 5,
+        "time_fit": 3,
+        "cost": 0,
+        "duration_days": 10,
+        "risks": []
+      },
+      {
+        "id": "unknown_duration",
+        "description": "Join an intensive speaking program with unknown duration",
+        "goal_alignment": 5,
+        "feasibility": 5,
+        "safety": 5,
+        "cost_fit": 5,
+        "time_fit": 5,
+        "cost": 0,
+        "duration_days": null,
         "risks": []
       }
     ]
