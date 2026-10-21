@@ -159,7 +159,7 @@ def collect_goal_clarifications(
 
     max_cost = _ask_optional_number(
         ask, output,
-        "What is your maximum budget/cost? (Enter to skip): ",
+        "What is your maximum budget in INR? (Enter to skip): ",
         0,
     )
     if max_cost is not None:

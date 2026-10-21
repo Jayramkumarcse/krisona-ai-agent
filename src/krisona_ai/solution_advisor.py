@@ -11,6 +11,8 @@ import re
 from math import isfinite
 from typing import Any
 
+from .solution_catalog import find_solutions
+
 
 def _matches(text: str, *terms: str) -> bool:
     return any(term in text for term in terms)
@@ -404,6 +406,47 @@ def generate_solution_advice(
         ]
         measure = success_criteria or "Track spending, upcoming bills, and the difference between income and expenses."
 
+    elif _matches(
+        text, "stress", "stressed", "overwhelmed",
+        "anxious", "anxiety", "burnout",
+    ):
+        category = "stress_management"
+        title = "Address one manageable source of stress"
+        recommendation = (
+            "Identify what is contributing to the stress, choose one "
+            "manageable action within your control, and consider using "
+            "a structured self-help resource."
+        )
+        options = [
+            {
+                "name": "Structured self-help",
+                "benefit": "Offers practical exercises to try at your own pace.",
+                "tradeoff": "Self-help may not be sufficient for persistent or severe distress.",
+                "first_step": "Review the WHO stress-management guide and choose an appropriate exercise.",
+            },
+            {
+                "name": "Reduce one controllable pressure",
+                "benefit": "Turns an overwhelming situation into a smaller action.",
+                "tradeoff": "Some causes of stress are outside your control.",
+                "first_step": "Write down one pressure and identify a small change you can make.",
+            },
+            {
+                "name": "Seek appropriate support",
+                "benefit": "A trusted person or qualified professional may offer additional help.",
+                "tradeoff": "Finding suitable support can take time.",
+                "first_step": "Identify someone trustworthy or a suitable local support service.",
+            },
+        ]
+        steps = [
+            {"when": "Today", "task": "Identify one source of stress and one manageable next step."},
+            {"when": "This week", "task": "Try an appropriate coping exercise and notice how it feels."},
+            {"when": "Day 7", "task": "Review what helped and whether more support is needed."},
+        ]
+        measure = (
+            success_criteria
+            or "Record which coping actions you tried and whether you found them useful."
+        )
+
     else:
         category = "general_problem_solving"
         title = "Break the problem into a clear outcome and a small experiment"
@@ -456,6 +499,8 @@ def generate_solution_advice(
             ),
         }]
 
+    catalog_solutions = find_solutions(category, constraints=limits)
+
     return {
         "status": (
             "no_feasible_options"
@@ -466,6 +511,7 @@ def generate_solution_advice(
         "constraint_notes": constraint_notes,
         "excluded_options": excluded_options,
         "problem_type": category,
+        "catalog_solutions": catalog_solutions,
         "title": title,
         "problem": problem.strip(),
         "goal": goal,

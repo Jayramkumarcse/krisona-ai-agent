@@ -208,6 +208,45 @@ def run_interactive() -> int:
                 print(f"      {name}: {status}")
 
     print()
+    print("SOURCE-LINKED RESOURCES")
+    catalog_resources = advice.get("catalog_solutions", [])
+
+    if not catalog_resources:
+        print("No catalog resources for this problem category yet.")
+
+    for resource in catalog_resources:
+        assessment = resource["catalog_assessment"]
+        cost = resource["cost"]
+        cost_display = (
+            "Unknown"
+            if cost is None
+            else f"{resource['currency']} {cost:g}"
+        )
+        duration = resource["duration_days"]
+        duration_display = (
+            "Unknown"
+            if duration is None
+            else f"{duration} days"
+        )
+
+        print(f"\n- {resource['title']}")
+        print(f"  Source: {resource['source_name']}")
+        print(f"  URL: {resource['source_url']}")
+        print(f"  Source summary: {resource['evidence_summary']}")
+        print(f"  Last checked: {resource['verified_on']}")
+        print(f"  Source review: {resource['source_review_status']}")
+        print(f"  Evidence category: {resource['evidence_type']}")
+        print(f"  Listed cost: {cost_display}")
+        print(f"  Duration estimate: {duration_display}")
+        print(f"  Constraint status: {assessment['status']}")
+
+        for name, status in assessment["checks"].items():
+            print(f"    {name}: {status}")
+
+        for limitation in resource["limitations"]:
+            print(f"  Limitation: {limitation}")
+
+    print()
     print("ACTION PLAN")
     for step in steps:
         print(f"- {step['when']}: {step['task']}")

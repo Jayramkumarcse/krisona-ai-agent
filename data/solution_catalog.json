@@ -1,0 +1,123 @@
+[
+  {
+    "solution_id": "british_council_speaking",
+    "problem_type": "spoken_english",
+    "title": "British Council LearnEnglish speaking practice",
+    "description": "Free self-study speaking lessons organized by English level, with videos, preparation activities and exercises.",
+    "source_name": "British Council LearnEnglish",
+    "source_url": "https://learnenglish.britishcouncil.org/free-resources/speaking",
+    "evidence_summary": "The official resource provides speaking activities organized by language level. It is a learning resource, not a guarantee of a particular fluency outcome.",
+    "verified_on": "2026-10-21",
+    "evidence_type": "expert_guidance",
+    "cost": 0,
+    "currency": "INR",
+    "duration_days": null,
+    "safety_rating": null,
+    "limitations": [
+      "Self-study does not replace live conversation or individualized feedback.",
+      "Progress depends on practice, starting level and other individual circumstances."
+    ],
+    "steps": [
+      "Choose a lesson appropriate for your English level.",
+      "Complete the preparation and video exercises.",
+      "Practise the useful phrases aloud and use them in a real conversation."
+    ]
+  },
+  {
+    "solution_id": "ies_effective_study_guide",
+    "problem_type": "study_and_exams",
+    "title": "Organizing Instruction and Study to Improve Student Learning",
+    "description": "A research-informed study guide covering spaced learning, practice questions and other approaches to learning and memory.",
+    "source_name": "Institute of Education Sciences — What Works Clearinghouse",
+    "source_url": "https://ies.ed.gov/ncee/wwc/PracticeGuide/1",
+    "evidence_summary": "The practice guide assigns evidence ratings to individual recommendations. These include spacing learning over time and using quizzes to retrieve information.",
+    "verified_on": "2026-10-21",
+    "evidence_type": "official_guidance",
+    "cost": 0,
+    "currency": "INR",
+    "duration_days": null,
+    "safety_rating": null,
+    "limitations": [
+      "This is a general study guide, not a personalized timetable.",
+      "Evidence ratings differ across individual recommendations."
+    ],
+    "steps": [
+      "Select one topic you need to learn.",
+      "Test your memory without looking at the notes.",
+      "Schedule another practice session after a delay."
+    ]
+  },
+  {
+    "solution_id": "india_national_career_service",
+    "problem_type": "career_and_job_search",
+    "title": "National Career Service",
+    "description": "Official Government of India portal for job searches, career guidance, internships, skills resources and related employment services.",
+    "source_name": "National Career Service — Ministry of Labour and Employment",
+    "source_url": "https://www.ncs.gov.in/",
+    "evidence_summary": "The official portal describes its employment and career-support services and states that NCS does not charge fees for registration, job applications or interviews.",
+    "verified_on": "2026-10-21",
+    "evidence_type": "official_guidance",
+    "cost": 0,
+    "currency": "INR",
+    "duration_days": null,
+    "safety_rating": null,
+    "limitations": [
+      "The portal does not guarantee employment.",
+      "Check eligibility and listing details before applying.",
+      "Beware of fraudulent people or websites claiming to represent NCS."
+    ],
+    "steps": [
+      "Identify your target role and relevant skills.",
+      "Search the official portal for suitable vacancies or career resources.",
+      "Check the requirements before applying."
+    ]
+  },
+  {
+    "solution_id": "rbi_financial_awareness",
+    "problem_type": "personal_budgeting",
+    "title": "Financial Awareness Messages: Budgeting, Saving and Responsible Borrowing",
+    "description": "Reserve Bank of India financial-literacy material covering budgeting, savings and responsible borrowing.",
+    "source_name": "Reserve Bank of India",
+    "source_url": "https://www.rbi.org.in/commonperson/images/FAME202426022024.pdf",
+    "evidence_summary": "The RBI material explains budgeting as planning future income and expenditure and comparing actual spending with the plan.",
+    "verified_on": "2026-10-21",
+    "evidence_type": "official_guidance",
+    "cost": 0,
+    "currency": "INR",
+    "duration_days": null,
+    "safety_rating": null,
+    "limitations": [
+      "General financial-literacy material, not personalized financial advice.",
+      "A budget cannot eliminate unexpected expenses or guarantee savings."
+    ],
+    "steps": [
+      "List your income and essential expenses.",
+      "Record actual spending and compare it with your plan.",
+      "Review the budget regularly and adjust realistic spending targets."
+    ]
+  },
+  {
+    "solution_id": "who_stress_management_guide",
+    "problem_type": "stress_management",
+    "title": "Doing What Matters in Times of Stress",
+    "description": "World Health Organization illustrated guide with practical self-help techniques for coping with stress.",
+    "source_name": "World Health Organization",
+    "source_url": "https://www.who.int/westernpacific/publications/i/item/9789240003927",
+    "evidence_summary": "WHO describes this guide as a skills-based resource for coping with adversity, with exercises that can be used independently.",
+    "verified_on": "2026-10-21",
+    "evidence_type": "official_guidance",
+    "cost": 0,
+    "currency": "INR",
+    "duration_days": null,
+    "safety_rating": null,
+    "limitations": [
+      "A self-help guide does not diagnose or replace professional assessment or treatment.",
+      "People who are struggling to cope should seek suitable professional or community support."
+    ],
+    "steps": [
+      "Read the guide's instructions before choosing an exercise.",
+      "Try a short exercise that feels appropriate for your circumstances.",
+      "Notice whether it is useful and seek further support when needed."
+    ]
+  }
+]

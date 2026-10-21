@@ -314,3 +314,173 @@ def load_solution_catalog(
         raise ValueError("Catalog must contain valid UTF-8 JSON.") from error
 
     return validate_solution_catalog(records)
+
+
+def find_solutions(
+    problem_type: str,
+    *,
+    constraints: dict[str, Any] | None = None,
+    path: str | Path | None = None,
+    limit: int = 5,
+) -> list[dict[str, Any]]:
+    """Find matching source records and assess their known constraints.
+
+    The CLI currently interprets numeric budgets as INR. Resources priced
+    in other currencies are not compared against an INR budget.
+
+    Missing metadata never counts as proof of compliance.
+    """
+    if (
+        not isinstance(problem_type, str)
+        or not _SLUG_PATTERN.fullmatch(problem_type)
+    ):
+        raise ValueError("problem_type must be a lowercase identifier.")
+
+    if isinstance(limit, bool) or not isinstance(limit, int):
+        raise ValueError("limit must be an integer from 1 to 50.")
+
+    if not 1 <= limit <= 50:
+        raise ValueError("limit must be an integer from 1 to 50.")
+
+    if constraints is None:
+        constraints = {}
+
+    if not isinstance(constraints, dict):
+        raise TypeError("constraints must be a dictionary or None.")
+
+    allowed = {"max_cost", "max_duration_days", "min_safety"}
+
+    if any(not isinstance(key, str) for key in constraints):
+        raise ValueError("Constraint names must be strings.")
+
+    unknown = set(constraints) - allowed
+    if unknown:
+        raise ValueError(
+            f"Unsupported constraints: {', '.join(sorted(unknown))}."
+        )
+
+    limits: dict[str, float] = {}
+
+    for name, raw in constraints.items():
+        if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+            raise ValueError(f"{name} must be a finite number.")
+
+        try:
+            value = float(raw)
+        except (TypeError, ValueError, OverflowError) as error:
+            raise ValueError(f"{name} must be a finite number.") from error
+
+        if not isfinite(value):
+            raise ValueError(f"{name} must be a finite number.")
+
+        if name == "min_safety":
+            if not 1 <= value <= 5:
+                raise ValueError("min_safety must be between 1 and 5.")
+        elif value < 0:
+            raise ValueError(f"{name} must be >= 0.")
+
+        limits[name] = value
+
+    catalog_path = (
+        path
+        if path is not None
+        else Path(__file__).resolve().parents[2]
+        / "data"
+        / "solution_catalog.json"
+    )
+
+    records = load_solution_catalog(catalog_path)
+    results: list[dict[str, Any]] = []
+
+    for record in records:
+        if record["problem_type"] != problem_type:
+            continue
+
+        checks: dict[str, str] = {}
+        violations: list[str] = []
+        unknown_checks: list[str] = []
+
+        for name, limit_value in limits.items():
+            if name == "max_cost":
+                value = record["cost"]
+
+                if value is None:
+                    checks[name] = "unknown"
+                    unknown_checks.append(name)
+                    continue
+
+                if record["currency"] != "INR":
+                    checks[name] = "currency_mismatch"
+                    unknown_checks.append(name)
+                    continue
+
+            elif name == "max_duration_days":
+                value = record["duration_days"]
+
+                if value is None:
+                    checks[name] = "unknown"
+                    unknown_checks.append(name)
+                    continue
+
+            else:
+                value = record["safety_rating"]
+
+                if value is None:
+                    checks[name] = "unknown"
+                    unknown_checks.append(name)
+                    continue
+
+            passes = (
+                value >= limit_value
+                if name == "min_safety"
+                else value <= limit_value
+            )
+
+            if passes:
+                checks[name] = "within_limit"
+            else:
+                checks[name] = "exceeds_limit"
+                violations.append(name)
+
+        # A confirmed violation excludes a resource. Unknown information
+        # remains visible with a verification warning.
+        if violations:
+            continue
+
+        clean = dict(record)
+        clean["catalog_assessment"] = {
+            "status": (
+                "not_requested"
+                if not limits
+                else "needs_verification"
+                if unknown_checks
+                else "within_limits"
+            ),
+            "checks": checks,
+            "notes": (
+                [
+                    "Unknown or non-INR metadata has not been treated as "
+                    "proof of compliance."
+                ]
+                if unknown_checks else []
+            ),
+        }
+
+        age_days = (
+            date.today() - date.fromisoformat(record["verified_on"])
+        ).days
+
+        clean["source_review_status"] = (
+            "future_date"
+            if age_days < 0
+            else "review_due"
+            if age_days > 180
+            else "recently_checked"
+        )
+
+        results.append(clean)
+
+        if len(results) >= limit:
+            break
+
+    return results
