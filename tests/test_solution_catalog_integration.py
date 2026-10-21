@@ -20,17 +20,18 @@ CATALOG = (
 
 
 class SolutionCatalogIntegrationTests(unittest.TestCase):
-    def test_all_five_problem_categories_have_resources(self):
+    def test_all_six_problem_categories_have_resources(self):
         categories = {
             "spoken_english",
             "study_and_exams",
             "career_and_job_search",
             "personal_budgeting",
             "stress_management",
+            "focus_and_time",
         }
 
         records = load_solution_catalog(CATALOG)
-        self.assertEqual(len(records), 5)
+        self.assertEqual(len(records), 6)
 
         found_categories = {
             record["problem_type"]

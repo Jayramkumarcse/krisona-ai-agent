@@ -119,5 +119,30 @@
       "Try a short exercise that feels appropriate for your circumstances.",
       "Notice whether it is useful and seek further support when needed."
     ]
+  },
+  {
+    "solution_id": "monash_procrastination_strategies",
+    "problem_type": "focus_and_time",
+    "title": "Monash strategies to avoid procrastination",
+    "description": "Practical guidance for starting tasks, reducing distractions, and breaking work into manageable steps.",
+    "source_name": "Monash University Student Academic Success",
+    "source_url": "https://www.monash.edu/student-academic-success/goal-setting-and-time-management/strategies-to-avoid-procrastination",
+    "evidence_summary": "The guide recommends practical starting strategies, including working for five minutes, making the next action concrete, and reducing distractions. These are guidance strategies, not guaranteed outcomes.",
+    "verified_on": "2026-10-21",
+    "evidence_type": "official_guidance",
+    "cost": null,
+    "currency": null,
+    "duration_days": null,
+    "safety_rating": null,
+    "limitations": [
+      "Examples are primarily aimed at university students and may need adapting to work or everyday responsibilities.",
+      "These strategies may not be sufficient when exhaustion, health concerns, or external demands are the main barriers."
+    ],
+    "steps": [
+      "Choose one task you have been postponing.",
+      "Write down the smallest concrete next action.",
+      "Set a five-minute timer and begin that action.",
+      "Reduce one likely distraction and review what helped."
+    ]
   }
 ]
