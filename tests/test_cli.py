@@ -187,5 +187,58 @@ class CLITests(unittest.TestCase):
             )
 
 
+    def test_feedback_cli_commands_capture_and_summarize(self):
+        mission_id = "mission-cli-feedback-test"
+
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "feedback.sqlite3"
+
+            MissionStore(database).save_mission({
+                "mission_id": mission_id,
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "situation": "Improve spoken English",
+                "workflow_result": {
+                    "status": "advice_ready",
+                    "mission": {
+                        "mission_id": "nested-mission-metadata",
+                        "domain": "daily_life",
+                        "goal": "improve spoken English",
+                    },
+                },
+            })
+
+            with (
+                patch.object(cli, "DB_PATH", database),
+                patch(
+                    "builtins.input",
+                    side_effect=["5", "y", "The advice was practical"],
+                ),
+                redirect_stdout(StringIO()) as feedback_output,
+            ):
+                self.assertEqual(
+                    cli.main(["feedback", "--mission-id", mission_id]),
+                    0,
+                )
+
+            self.assertIn(
+                "Feedback saved successfully",
+                feedback_output.getvalue(),
+            )
+
+            with (
+                patch.object(cli, "DB_PATH", database),
+                redirect_stdout(StringIO()) as summary_output,
+            ):
+                self.assertEqual(cli.main(["feedback-summary"]), 0)
+
+            summary = summary_output.getvalue()
+            self.assertIn('"summary_ready"', summary)
+            self.assertIn('"average_rating": 5.0', summary)
+            self.assertIn('"helpful_rate_percent": 100.0', summary)
+            self.assertIn('"daily_life"', summary)
+            self.assertNotIn("The advice was practical", summary)
+
+
+
 if __name__ == "__main__":
     unittest.main()

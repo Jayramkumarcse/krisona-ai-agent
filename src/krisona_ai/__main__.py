@@ -15,6 +15,7 @@ from .decision_engine import RATING_FIELDS
 from .goal_clarifier import collect_goal_clarifications
 from .solution_advisor import generate_solution_advice
 from .mission_store import MissionStore
+from .feedback_analyzer import summarize_feedback
 from .progress_tracker import create_weekly_review, summarize_progress
 
 
@@ -335,6 +336,62 @@ def show_weekly_review(mission_id: str | None = None) -> int:
     return 0
 
 
+
+def record_feedback_interactive(
+    mission_id: str | None = None,
+) -> int:
+    """Capture an explicit rating for a saved mission."""
+    store = MissionStore(DB_PATH)
+    record = _select_progress_mission(mission_id)
+    mission_id = record["mission_id"]
+
+    print(f"\nFeedback for mission: {mission_id}")
+
+    while True:
+        raw_rating = input("Rate KRISONA's guidance from 1 to 5: ").strip()
+        try:
+            rating = int(raw_rating)
+        except ValueError:
+            rating = 0
+        if 1 <= rating <= 5:
+            break
+        print("Enter a whole number from 1 to 5.")
+
+    while True:
+        answer = input("Was the guidance helpful? (y/n): ").strip().casefold()
+        if answer in {"y", "yes"}:
+            helpful = True
+            break
+        if answer in {"n", "no"}:
+            helpful = False
+            break
+        print("Enter y or n.")
+
+    comments = input("Additional feedback (optional): ").strip()
+
+    feedback = {"rating": rating, "helpful": helpful}
+    if comments:
+        feedback["comments"] = comments
+
+    feedback_id = store.record_feedback(mission_id, feedback)
+
+    print("\nFeedback saved successfully.")
+    print(json.dumps({
+        "mission_id": mission_id,
+        "feedback_id": feedback_id,
+        "rating": rating,
+        "helpful": helpful,
+    }, indent=2, ensure_ascii=False))
+    return 0
+
+
+def show_feedback_summary(limit: int = 100) -> int:
+    """Display aggregate feedback without revealing private comments."""
+    report = summarize_feedback(MissionStore(DB_PATH), limit=limit)
+    print(json.dumps(report, indent=2, ensure_ascii=False))
+    return 0
+
+
 def list_missions() -> int:
     store = MissionStore(DB_PATH)
     records = store.list_missions(limit=20)
@@ -362,11 +419,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "command",
         nargs="?",
-        choices=("run", "list", "checkin", "progress", "review"),
+        choices=("run", "list", "checkin", "progress", "review", "feedback", "feedback-summary"),
         default="run",
         help="'run' starts a guided session; 'list' shows saved missions",
     )
     parser.add_argument("--mission-id", help="Target a saved mission ID.")
+    parser.add_argument(
+        "--limit", type=int, default=100,
+        help="Maximum number of missions to analyze (1-100).",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -378,6 +439,10 @@ def main(argv: list[str] | None = None) -> int:
             return show_progress(args.mission_id)
         if args.command == "review":
             return show_weekly_review(args.mission_id)
+        if args.command == "feedback":
+            return record_feedback_interactive(args.mission_id)
+        if args.command == "feedback-summary":
+            return show_feedback_summary(args.limit)
         return run_interactive()
     except KeyboardInterrupt:
         print("\nCancelled.")

@@ -76,11 +76,18 @@ def summarize_feedback(
         if not isinstance(record, dict):
             continue
 
-        mission = record.get("mission", record)
+        mission = record.get("mission")
+        if not isinstance(mission, dict):
+            workflow = record.get("workflow_result", {})
+            mission = (
+                workflow.get("mission", {})
+                if isinstance(workflow, dict)
+                else {}
+            )
         if not isinstance(mission, dict):
             mission = {}
 
-        domain = mission.get("domain", "other")
+        domain = mission.get("domain", record.get("domain", "other"))
         if domain not in SUPPORTED_DOMAINS:
             domain = "other"
 
@@ -89,7 +96,7 @@ def summarize_feedback(
         overall["mission_count"] += 1
         bucket["mission_count"] += 1
 
-        mission_id = mission.get("mission_id")
+        mission_id = record.get("mission_id") or mission.get("mission_id")
         if not isinstance(mission_id, str):
             continue
 
