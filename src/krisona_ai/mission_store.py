@@ -7,7 +7,7 @@ import os
 import re
 import sqlite3
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -425,6 +425,103 @@ class MissionStore:
             "task_id": task_id,
             "status": status,
             "updated_at": timestamp,
+        }
+
+    def record_progress_checkin(
+        self,
+        mission_id: str,
+        *,
+        minutes: int,
+        activity: str,
+        completed: bool,
+        difficulty: str | None = None,
+        self_rating: int | None = None,
+        checkin_date: str | None = None,
+    ) -> dict[str, Any]:
+        """Store a structured daily progress check-in as a mission event."""
+        mission_id = _checked_id(mission_id, "mission_id")
+
+        if (
+            isinstance(minutes, bool)
+            or not isinstance(minutes, int)
+            or not 0 <= minutes <= 1440
+        ):
+            raise ValueError("minutes must be a whole number from 0 to 1440.")
+
+        activity = _text(activity, "activity", 500)
+
+        if not isinstance(completed, bool):
+            raise ValueError("completed must be true or false.")
+
+        if difficulty is not None:
+            difficulty = _text(difficulty, "difficulty", 1000)
+
+        if self_rating is not None:
+            if (
+                isinstance(self_rating, bool)
+                or not isinstance(self_rating, int)
+                or not 1 <= self_rating <= 5
+            ):
+                raise ValueError("self_rating must be an integer from 1 to 5.")
+
+        if checkin_date is None:
+            checkin_date = datetime.now().astimezone().date().isoformat()
+        if not isinstance(checkin_date, str):
+            raise ValueError("checkin_date must use YYYY-MM-DD format.")
+
+        try:
+            parsed_date = date.fromisoformat(checkin_date)
+        except ValueError as exc:
+            raise ValueError("checkin_date must use YYYY-MM-DD format.") from exc
+
+        if parsed_date.isoformat() != checkin_date:
+            raise ValueError("checkin_date must use YYYY-MM-DD format.")
+
+        payload = {
+            "checkin_date": checkin_date,
+            "minutes": minutes,
+            "activity": activity,
+            "completed": completed,
+            "difficulty": difficulty,
+            "self_rating": self_rating,
+        }
+        encoded = _json_text(payload, MAX_FEEDBACK_BYTES)
+        timestamp = _now()
+
+        connection = self._connect()
+        try:
+            with connection:
+                exists = connection.execute(
+                    "SELECT 1 FROM missions WHERE mission_id = ?",
+                    (mission_id,),
+                ).fetchone()
+
+                if not exists:
+                    raise KeyError(f"Unknown mission: {mission_id}")
+
+                cursor = connection.execute(
+                    """
+                    INSERT INTO events
+                        (mission_id, created_at, event_type, data_json)
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    (mission_id, timestamp, "progress_checkin", encoded),
+                )
+                event_id = cursor.lastrowid
+
+                connection.execute(
+                    "UPDATE missions SET updated_at = ? WHERE mission_id = ?",
+                    (timestamp, mission_id),
+                )
+        finally:
+            connection.close()
+
+        return {
+            "event_id": event_id,
+            "mission_id": mission_id,
+            "created_at": timestamp,
+            "event_type": "progress_checkin",
+            "data": payload,
         }
 
     def list_events(self, mission_id: str) -> list[dict[str, Any]]:
