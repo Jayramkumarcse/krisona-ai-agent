@@ -8,6 +8,7 @@ circumstances.
 from __future__ import annotations
 
 import re
+from math import isfinite
 from typing import Any
 
 
@@ -20,6 +21,173 @@ def _daily_minutes(available: int, suggested: int = 20) -> int:
     return min(available, suggested)
 
 
+
+CONSTRAINT_FIELDS = {
+    "max_cost": "cost",
+    "max_duration_days": "duration_days",
+    "min_safety": "safety",
+}
+
+
+def _validate_constraints(
+    constraints: dict[str, Any] | None,
+) -> dict[str, float]:
+    'Validate user-provided hard limits.'
+    if constraints is None:
+        return {}
+
+    if not isinstance(constraints, dict):
+        raise TypeError("constraints must be a dictionary or None.")
+
+    if any(not isinstance(key, str) for key in constraints):
+        raise ValueError("Constraint names must be strings.")
+
+    unknown = set(constraints) - set(CONSTRAINT_FIELDS)
+    if unknown:
+        raise ValueError(
+            f"Unsupported constraints: {', '.join(sorted(unknown))}."
+        )
+
+    validated: dict[str, float] = {}
+
+    for name, raw in constraints.items():
+        if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+            raise ValueError(f"{name} must be a finite number.")
+
+        try:
+            value = float(raw)
+        except (OverflowError, ValueError) as error:
+            raise ValueError(f"{name} must be a finite number.") from error
+
+        if not isfinite(value):
+            raise ValueError(f"{name} must be a finite number.")
+
+        if name == "min_safety":
+            if not 1 <= value <= 5:
+                raise ValueError("min_safety must be between 1 and 5.")
+        elif value < 0:
+            raise ValueError(f"{name} must be >= 0.")
+
+        validated[name] = value
+
+    return validated
+
+
+def _assess_constraint_fit(
+    options: list[dict[str, Any]],
+    constraints: dict[str, float],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], str, list[str]]:
+    'Exclude confirmed violations and expose unknown information.'
+    if not constraints:
+        return [dict(item) for item in options], [], "not_requested", []
+
+    eligible: list[dict[str, Any]] = []
+    excluded: list[dict[str, Any]] = []
+    unknown_constraints: set[str] = set()
+    has_unknown = False
+
+    for option in options:
+        checks: dict[str, str] = {}
+        violations: list[str] = []
+        missing: list[str] = []
+
+        for constraint, limit in constraints.items():
+            field = CONSTRAINT_FIELDS[constraint]
+            raw = option.get(field)
+
+            if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+                checks[constraint] = "unknown"
+                missing.append(constraint)
+                continue
+
+            try:
+                value = float(raw)
+            except (OverflowError, ValueError):
+                checks[constraint] = "unknown"
+                missing.append(constraint)
+                continue
+
+            if not isfinite(value):
+                checks[constraint] = "unknown"
+                missing.append(constraint)
+                continue
+
+            if constraint == "min_safety" and not 1 <= value <= 5:
+                checks[constraint] = "unknown"
+                missing.append(constraint)
+                continue
+
+            if constraint != "min_safety" and value < 0:
+                checks[constraint] = "unknown"
+                missing.append(constraint)
+                continue
+
+            passes = (
+                value >= limit
+                if constraint == "min_safety"
+                else value <= limit
+            )
+
+            if passes:
+                checks[constraint] = "within_limit"
+            else:
+                checks[constraint] = "exceeds_limit"
+                violations.append(
+                    f"{field}={value:g} violates {constraint}={limit:g}"
+                )
+
+        if violations:
+            excluded.append({
+                "name": option.get("name", "Unnamed option"),
+                "violations": violations,
+            })
+            continue
+
+        has_unknown = has_unknown or bool(missing)
+        unknown_constraints.update(missing)
+
+        assessed = dict(option)
+        assessed["constraint_assessment"] = {
+            "status": "needs_verification" if missing else "within_limits",
+            "checks": checks,
+        }
+        eligible.append(assessed)
+
+    if not eligible:
+        status = "no_feasible_options"
+    elif has_unknown and excluded:
+        status = "partially_verified"
+    elif has_unknown:
+        status = "needs_verification"
+    elif excluded:
+        status = "within_limits_with_exclusions"
+    else:
+        status = "within_limits"
+
+    notes: list[str] = []
+
+    if unknown_constraints:
+        names = ", ".join(sorted(unknown_constraints))
+        notes.append(
+            f"Feasibility is not verified for: {names}. "
+            "Some options lack confirmed cost, duration, or safety metadata."
+        )
+
+    if excluded:
+        notes.append(
+            f"Excluded {len(excluded)} option(s) with confirmed violations "
+            "of the supplied hard limits."
+        )
+
+    if not eligible:
+        notes.append(
+            "No listed option satisfies all supplied hard constraints "
+            "based on the available metadata."
+        )
+
+    return eligible, excluded, status, notes
+
+
 def generate_solution_advice(
     problem: str,
     *,
@@ -27,6 +195,7 @@ def generate_solution_advice(
     daily_capacity_minutes: int = 120,
     deadline: str | None = None,
     success_criteria: str | None = None,
+    constraints: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Generate options and a practical first action for a described problem."""
     if not isinstance(problem, str) or not problem.strip():
@@ -39,6 +208,7 @@ def generate_solution_advice(
     ):
         raise ValueError("Daily capacity must be a whole number from 1 to 1440.")
 
+    limits = _validate_constraints(constraints)
     text = re.sub(r"\s+", " ", f"{problem} {goal or ''}".casefold()).strip()
     daily = _daily_minutes(daily_capacity_minutes)
     review = "Review after 7 days and adjust using your actual progress."
@@ -268,15 +438,40 @@ def generate_solution_advice(
         ]
         measure = success_criteria or "Choose one observable sign of improvement once the problem is defined."
 
+    eligible_options, excluded_options, constraint_status, constraint_notes = (
+        _assess_constraint_fit(options, limits)
+    )
+
+    if constraint_status == "no_feasible_options":
+        recommendation = (
+            "None of the listed options satisfies all supplied hard limits "
+            "based on its available metadata. Review the limits or supply "
+            "alternatives with verified cost, duration, and safety data."
+        )
+        steps = [{
+            "when": "Next step",
+            "task": (
+                "Review the hard limits or identify an alternative with "
+                "confirmed metadata before proceeding."
+            ),
+        }]
+
     return {
-        "status": "advice_ready",
+        "status": (
+            "no_feasible_options"
+            if constraint_status == "no_feasible_options"
+            else "advice_ready"
+        ),
+        "constraint_status": constraint_status,
+        "constraint_notes": constraint_notes,
+        "excluded_options": excluded_options,
         "problem_type": category,
         "title": title,
         "problem": problem.strip(),
         "goal": goal,
         "deadline": deadline,
         "recommended_approach": recommendation,
-        "options": options,
+        "options": eligible_options,
         "action_plan": steps,
         "success_measure": measure,
         "review": review,

@@ -126,6 +126,7 @@ def run_interactive() -> int:
         daily_capacity_minutes=details["daily_capacity_minutes"],
         deadline=details["deadline"],
         success_criteria=details["success_criteria"],
+        constraints=details["constraints"],
     )
 
     timestamp = datetime.now(timezone.utc).isoformat()
@@ -157,7 +158,7 @@ def run_interactive() -> int:
     )
 
     result = {
-        "status": "advice_ready",
+        "status": advice["status"],
         "mission": mission,
         "advice": advice,
         "decision": None,
@@ -200,6 +201,11 @@ def run_interactive() -> int:
         print(f"   Benefit: {option['benefit']}")
         print(f"   Trade-off: {option['tradeoff']}")
         print(f"   First step: {option['first_step']}")
+        assessment = option.get("constraint_assessment")
+        if isinstance(assessment, dict):
+            print(f"   Constraint fit: {assessment['status']}")
+            for name, status in assessment.get("checks", {}).items():
+                print(f"      {name}: {status}")
 
     print()
     print("ACTION PLAN")
@@ -214,10 +220,16 @@ def run_interactive() -> int:
     print(advice["review"])
     print()
     print("Your stated constraints have been saved with this mission.")
-    print(
-        "Note: This initial rule-based advisor does not yet automatically "
-        "filter recommendations by budget or maximum duration."
-    )
+
+    if details["constraints"]:
+        print()
+        print("CONSTRAINT CHECK")
+        print(f"Overall status: {advice['constraint_status']}")
+        for note in advice.get("constraint_notes", []):
+            print(f"- {note}")
+        for item in advice.get("excluded_options", []):
+            print(f"- Excluded {item['name']}: "
+                  f"{'; '.join(item['violations'])}")
     print(advice["limitations"])
     print(f"\nSaved locally to: {DB_PATH}")
 

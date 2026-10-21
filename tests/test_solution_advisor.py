@@ -2,7 +2,10 @@
 
 import unittest
 
-from krisona_ai.solution_advisor import generate_solution_advice
+from krisona_ai.solution_advisor import (
+    _assess_constraint_fit,
+    generate_solution_advice,
+)
 
 
 class SolutionAdvisorTests(unittest.TestCase):
@@ -51,6 +54,99 @@ class SolutionAdvisorTests(unittest.TestCase):
                         "I want to study",
                         daily_capacity_minutes=value,
                     )
+
+
+    def test_unknown_option_metadata_is_not_claimed_feasible(self):
+        result = generate_solution_advice(
+            "I want to improve my spoken English",
+            daily_capacity_minutes=30,
+            deadline="within 8 weeks",
+            constraints={"max_cost": 3000, "max_duration_days": 56},
+        )
+
+        self.assertEqual(result["status"], "advice_ready")
+        self.assertEqual(result["constraint_status"], "needs_verification")
+        self.assertEqual(len(result["options"]), 3)
+        self.assertTrue(all(
+            item["constraint_assessment"]["status"] == "needs_verification"
+            for item in result["options"]
+        ))
+        self.assertTrue(result["constraint_notes"])
+
+    def test_known_constraint_violations_are_excluded(self):
+        options = [
+            {
+                "name": "Suitable",
+                "cost": 50,
+                "duration_days": 10,
+                "safety": 4,
+            },
+            {
+                "name": "Over budget",
+                "cost": 200,
+                "duration_days": 10,
+                "safety": 4,
+            },
+            {
+                "name": "Unknown safety",
+                "cost": 20,
+                "duration_days": 10,
+            },
+        ]
+
+        eligible, excluded, status, notes = _assess_constraint_fit(
+            options,
+            {"max_cost": 100, "max_duration_days": 30, "min_safety": 3},
+        )
+
+        self.assertEqual([item["name"] for item in eligible],
+                         ["Suitable", "Unknown safety"])
+        self.assertEqual(len(excluded), 1)
+        self.assertEqual(excluded[0]["name"], "Over budget")
+        self.assertEqual(status, "partially_verified")
+        self.assertTrue(notes)
+        self.assertEqual(
+            eligible[1]["constraint_assessment"]["checks"]["min_safety"],
+            "unknown",
+        )
+
+    def test_fully_known_compliant_options_pass_constraints(self):
+        eligible, excluded, status, notes = _assess_constraint_fit(
+            [{
+                "name": "Suitable",
+                "cost": 50,
+                "duration_days": 7,
+                "safety": 4,
+            }],
+            {"max_cost": 100, "max_duration_days": 14, "min_safety": 3},
+        )
+
+        self.assertEqual(status, "within_limits")
+        self.assertEqual(len(eligible), 1)
+        self.assertEqual(excluded, [])
+        self.assertEqual(notes, [])
+
+    def test_invalid_constraints_are_rejected(self):
+        for constraints in (
+            {"max_cost": True},
+            {"max_cost": -1},
+            {"max_duration_days": float("inf")},
+            {"min_safety": 0},
+            {"unsupported_limit": 10},
+        ):
+            with self.subTest(constraints=constraints):
+                with self.assertRaises(ValueError):
+                    generate_solution_advice(
+                        "I want to improve my spoken English",
+                        constraints=constraints,
+                    )
+
+        with self.assertRaises(TypeError):
+            generate_solution_advice(
+                "I want to improve my spoken English",
+                constraints=["max_cost"],
+            )
+
 
 
 if __name__ == "__main__":
