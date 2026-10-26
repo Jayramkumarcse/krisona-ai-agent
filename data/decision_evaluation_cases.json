@@ -313,5 +313,191 @@
         "risks": []
       }
     ]
+  },
+  {
+    "id": "tie_break_alphabetical",
+    "description": "Resolve equal scores deterministically by option ID",
+    "expected_status": "recommended",
+    "expected_option_id": "alpha",
+    "constraints": {},
+    "options": [
+      {
+        "id": "zeta",
+        "description": "Test option: zeta",
+        "goal_alignment": 4,
+        "feasibility": 4,
+        "safety": 5,
+        "cost_fit": 4,
+        "time_fit": 4,
+        "cost": 0,
+        "duration_days": 2,
+        "risks": []
+      },
+      {
+        "id": "alpha",
+        "description": "Test option: alpha",
+        "goal_alignment": 4,
+        "feasibility": 4,
+        "safety": 5,
+        "cost_fit": 4,
+        "time_fit": 4,
+        "cost": 0,
+        "duration_days": 2,
+        "risks": []
+      }
+    ]
+  },
+  {
+    "id": "deadline_hard_constraint",
+    "description": "Reject a high-scoring option that misses the deadline",
+    "expected_status": "recommended",
+    "expected_option_id": "quick_practice",
+    "constraints": {
+      "max_duration_days": 3
+    },
+    "options": [
+      {
+        "id": "long_course",
+        "description": "Test option: long_course",
+        "goal_alignment": 5,
+        "feasibility": 5,
+        "safety": 5,
+        "cost_fit": 5,
+        "time_fit": 5,
+        "cost": 0,
+        "duration_days": 14,
+        "risks": []
+      },
+      {
+        "id": "quick_practice",
+        "description": "Test option: quick_practice",
+        "goal_alignment": 4,
+        "feasibility": 4,
+        "safety": 5,
+        "cost_fit": 5,
+        "time_fit": 5,
+        "cost": 0,
+        "duration_days": 2,
+        "risks": []
+      }
+    ]
+  },
+  {
+    "id": "combined_hard_constraints",
+    "description": "Choose the viable option under budget and deadline limits",
+    "expected_status": "recommended",
+    "expected_option_id": "practical",
+    "constraints": {
+      "max_cost": 50,
+      "max_duration_days": 5
+    },
+    "options": [
+      {
+        "id": "expensive_fast",
+        "description": "Test option: expensive_fast",
+        "goal_alignment": 5,
+        "feasibility": 5,
+        "safety": 5,
+        "cost_fit": 5,
+        "time_fit": 5,
+        "cost": 200,
+        "duration_days": 2,
+        "risks": []
+      },
+      {
+        "id": "cheap_slow",
+        "description": "Test option: cheap_slow",
+        "goal_alignment": 4,
+        "feasibility": 4,
+        "safety": 5,
+        "cost_fit": 5,
+        "time_fit": 5,
+        "cost": 15,
+        "duration_days": 10,
+        "risks": []
+      },
+      {
+        "id": "practical",
+        "description": "Test option: practical",
+        "goal_alignment": 4,
+        "feasibility": 4,
+        "safety": 5,
+        "cost_fit": 4,
+        "time_fit": 4,
+        "cost": 30,
+        "duration_days": 4,
+        "risks": []
+      }
+    ]
+  },
+  {
+    "id": "safety_floor_no_feasible",
+    "description": "Abstain when every option fails the minimum safety rating",
+    "expected_status": "no_feasible_option",
+    "expected_option_id": null,
+    "constraints": {
+      "min_safety": 4
+    },
+    "options": [
+      {
+        "id": "unsafe_a",
+        "description": "Test option: unsafe_a",
+        "goal_alignment": 4,
+        "feasibility": 4,
+        "safety": 2,
+        "cost_fit": 4,
+        "time_fit": 4,
+        "cost": 0,
+        "duration_days": 2,
+        "risks": []
+      },
+      {
+        "id": "unsafe_b",
+        "description": "Test option: unsafe_b",
+        "goal_alignment": 4,
+        "feasibility": 4,
+        "safety": 3,
+        "cost_fit": 4,
+        "time_fit": 4,
+        "cost": 0,
+        "duration_days": 2,
+        "risks": []
+      }
+    ]
+  },
+  {
+    "id": "unknown_cost_competitor",
+    "description": "Ask for missing cost before comparing viable alternatives",
+    "expected_status": "clarifying",
+    "expected_option_id": null,
+    "constraints": {
+      "max_cost": 100
+    },
+    "options": [
+      {
+        "id": "known_free",
+        "description": "Test option: known_free",
+        "goal_alignment": 4,
+        "feasibility": 4,
+        "safety": 5,
+        "cost_fit": 5,
+        "time_fit": 4,
+        "cost": 0,
+        "duration_days": 3,
+        "risks": []
+      },
+      {
+        "id": "unknown_paid",
+        "description": "Test option: unknown_paid",
+        "goal_alignment": 5,
+        "feasibility": 5,
+        "safety": 5,
+        "cost_fit": 5,
+        "time_fit": 5,
+        "cost": null,
+        "duration_days": 3,
+        "risks": []
+      }
+    ]
   }
 ]

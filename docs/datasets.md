@@ -13,6 +13,18 @@ Current limitation:
 This is a small, curated evaluation set. It is not a training dataset
 and does not establish real-world decision quality.
 
+### Current benchmark coverage
+
+The evaluation file currently contains 14 curated cases. Coverage includes
+goal-aligned choices, budget and duration limits, combined constraints,
+minimum safety ratings, deterministic tie-breaking, missing information,
+clarification, and cases where no option is feasible.
+
+Run the benchmark with `python -m krisona_ai.recommendation_evaluator`.
+A passing result confirms expected behavior on these specified cases; it does
+not establish real-world recommendation quality or generalization to unseen
+situations.
+
 ## 2. External dialogue datasets
 
 ### Schema-Guided Dialogue (SGD)

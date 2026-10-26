@@ -1,6 +1,7 @@
 """Tests for the repeatable recommendation evaluation suite."""
 
 import unittest
+from unittest.mock import patch
 
 from krisona_ai.recommendation_evaluator import evaluate_cases
 
@@ -32,6 +33,37 @@ class RecommendationEvaluatorTests(unittest.TestCase):
         }])
         self.assertEqual(report["passed_cases"], 1)
         self.assertEqual(report["failed_cases"], 0)
+
+    def test_ineligible_selection_fails_even_when_expected(self):
+        case = {
+            "id": "blocked_option",
+            "expected_status": "recommended",
+            "expected_option_id": "blocked",
+            "constraints": {},
+            "options": [option("blocked")],
+        }
+        simulated_engine_result = {
+            "status": "recommended",
+            "selected_option_id": "blocked",
+            "evaluated_options": [
+                {"id": "blocked", "status": "ineligible"},
+            ],
+        }
+
+        with patch(
+            "krisona_ai.recommendation_evaluator.evaluate_options",
+            return_value=simulated_engine_result,
+        ):
+            report = evaluate_cases([case])
+
+        result = report["results"][0]
+        self.assertTrue(result["status_match"])
+        self.assertTrue(result["selection_match"])
+        self.assertFalse(result["selected_option_is_eligible"])
+        self.assertFalse(result["eligibility_match"])
+        self.assertFalse(result["passed"])
+        self.assertEqual(report["failed_cases"], 1)
+
 
     def test_wrong_expected_selection_is_a_failure(self):
         report = evaluate_cases([{

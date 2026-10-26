@@ -72,6 +72,10 @@ def evaluate_cases(cases: list[dict[str, Any]]) -> dict[str, Any]:
             )
             chosen_status = chosen["status"]
 
+        eligibility_match = (
+            actual_id is None or chosen_status == "eligible"
+        )
+
         results.append({
             "id": case_id,
             "expected_status": expected_status,
@@ -83,7 +87,10 @@ def evaluate_cases(cases: list[dict[str, Any]]) -> dict[str, Any]:
             "selected_option_is_eligible": (
                 chosen_status == "eligible" if actual_id is not None else None
             ),
-            "passed": status_match and selection_match,
+            "eligibility_match": eligibility_match,
+            "passed": (
+                status_match and selection_match and eligibility_match
+            ),
         })
 
     count = len(results)
