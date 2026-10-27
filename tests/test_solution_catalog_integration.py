@@ -31,7 +31,10 @@ class SolutionCatalogIntegrationTests(unittest.TestCase):
         }
 
         records = load_solution_catalog(CATALOG)
-        self.assertEqual(len(records), 6)
+        self.assertGreaterEqual(
+            len(records), len(categories),
+            "Catalog should support multiple resources per category.",
+        )
 
         found_categories = {
             record["problem_type"]

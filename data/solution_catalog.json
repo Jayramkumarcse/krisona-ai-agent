@@ -144,5 +144,29 @@
       "Set a five-minute timer and begin that action.",
       "Reduce one likely distraction and review what helped."
     ]
+  },
+  {
+    "solution_id": "cambridge_english_activities",
+    "problem_type": "spoken_english",
+    "title": "Cambridge English free learning activities",
+    "description": "Free online English activities with filters for skill and level, including speaking and pronunciation.",
+    "source_name": "Cambridge English",
+    "source_url": "https://www.cambridgeenglish.org/learning-english/activities-for-learners/",
+    "evidence_summary": "The official site provides free English-learning activities, including speaking and pronunciation skills, with level filters and estimated times for individual activities.",
+    "verified_on": "2026-10-27",
+    "evidence_type": "official_guidance",
+    "cost": 0,
+    "currency": "INR",
+    "duration_days": null,
+    "safety_rating": null,
+    "limitations": [
+      "Individual activity times do not establish how long fluency improvement will take.",
+      "Short self-study exercises do not guarantee live conversation practice or individualized feedback."
+    ],
+    "steps": [
+      "Open the activities page and choose speaking or pronunciation.",
+      "Filter activities to a suitable English level.",
+      "Complete an activity and practise the phrases aloud."
+    ]
   }
 ]
