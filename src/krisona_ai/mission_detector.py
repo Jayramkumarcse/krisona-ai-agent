@@ -11,7 +11,7 @@ from uuid import uuid4
 DOMAIN_KEYWORDS = {
     "career": (
         "career", "job", "jobs", "resume", "cv", "interview",
-        "internship", "placement", "promotion", "salary", "naukri",
+        "interviews", "internship", "placement", "promotion", "salary", "naukri",
         "job search", "skill development", "नौकरी", "रोजगार",
     ),
     "education": (

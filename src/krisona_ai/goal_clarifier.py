@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import re
 from collections.abc import Callable
 from typing import Any
 
@@ -26,6 +27,117 @@ DOMAIN_LABELS = {
     "daily_life": "daily life",
     "productivity": "productivity",
 }
+
+
+_DAILY_TIME_PATTERN = re.compile(
+    r"\b(?P<amount>\d+(?:\.\d+)?)\s*"
+    r"(?P<unit>minutes?|mins?|hours?|hrs?)\s*"
+    r"(?P<cadence>per day|a day|each day|every day|daily|/\s*day)\b",
+    re.IGNORECASE,
+)
+
+_BUDGET_CUE = re.compile(
+    r"\b(?:budget|spend(?:ing)?|cost)\b",
+    re.IGNORECASE,
+)
+
+_MONEY_PATTERNS = (
+    re.compile(r"₹\s*(?P<amount>\d[\d,]*(?:\.\d+)?)", re.IGNORECASE),
+    re.compile(r"\bINR\s*(?P<amount>\d[\d,]*(?:\.\d+)?)", re.IGNORECASE),
+    re.compile(r"\bRs\.?\s*(?P<amount>\d[\d,]*(?:\.\d+)?)", re.IGNORECASE),
+    re.compile(
+        r"\b(?P<amount>\d[\d,]*(?:\.\d+)?)\s*"
+        r"(?:INR\b|rupees?\b|Rs\.?)",
+        re.IGNORECASE,
+    ),
+)
+
+
+def _extract_daily_capacity_minutes(text: str) -> int | None:
+    """Return one unambiguous daily time limit, in whole minutes."""
+    # Do not select one side of an explicit numeric alternative such as
+    # "30 or 60 minutes per day"; ask the user to resolve the ambiguity.
+    ambiguous_alternative = re.search(
+        r"\b\d+(?:\.\d+)?\s+(?:or|and)\s+"
+        r"\d+(?:\.\d+)?\s*"
+        r"(?:minutes?|mins?|hours?|hrs?)\s*"
+        r"(?:per day|a day|each day|every day|daily|/\s*day)\b",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if ambiguous_alternative:
+        return None
+
+    matches = list(_DAILY_TIME_PATTERN.finditer(text))
+    if not matches:
+        return None
+
+    values = set()
+    for match in matches:
+        amount = float(match.group("amount"))
+        unit = match.group("unit").casefold()
+
+        if unit.startswith(("hour", "hr")):
+            amount *= 60
+
+        if not amount.is_integer() or not 1 <= amount <= 1440:
+            return None
+
+        values.add(int(amount))
+
+    return values.pop() if len(values) == 1 else None
+
+
+
+_DAILY_INPUT_PATTERN = re.compile(
+    r"^(?P<amount>\d+(?:\.\d+)?)\s*"
+    r"(?P<unit>minutes?|mins?|hours?|hrs?)?\s*"
+    r"(?:per day|a day|each day|every day|daily|/\s*day)?$",
+    re.IGNORECASE,
+)
+
+
+def _parse_daily_capacity_input(raw: str) -> int | None:
+    """Parse daily availability supplied as a number or a duration phrase."""
+    inferred = _extract_daily_capacity_minutes(raw)
+    if inferred is not None:
+        return inferred
+
+    match = _DAILY_INPUT_PATTERN.fullmatch(raw.strip())
+    if not match:
+        return None
+
+    amount = float(match.group("amount"))
+    unit = (match.group("unit") or "minutes").casefold()
+
+    if unit.startswith(("hour", "hr")):
+        amount *= 60
+
+    if not amount.is_integer() or not 1 <= amount <= 1440:
+        return None
+
+    return int(amount)
+
+
+def _extract_max_budget_inr(text: str) -> float | None:
+    """Return one unambiguous currency amount associated with a budget cue."""
+    values = set()
+
+    for pattern in _MONEY_PATTERNS:
+        for match in pattern.finditer(text):
+            start, end = match.span()
+            nearby = text[max(0, start - 40):min(len(text), end + 40)]
+
+            if not _BUDGET_CUE.search(nearby):
+                continue
+
+            amount = float(match.group("amount").replace(",", ""))
+            if not math.isfinite(amount) or amount < 0:
+                return None
+
+            values.add(amount)
+
+    return next(iter(values)) if len(values) == 1 else None
 
 
 def _ask_optional_number(
@@ -59,6 +171,44 @@ def _ask_optional_number(
         return value
 
 
+
+_DURATION_PATTERN = re.compile(
+    r"\b(?P<amount>\d+(?:\.\d+)?)\s*"
+    r"(?P<unit>days?|weeks?|months?|years?)\b",
+    re.IGNORECASE,
+)
+
+
+def _extract_duration_days(text: str | None) -> float | None:
+    """Convert an explicit numeric duration into days, if unambiguous."""
+    if not text:
+        return None
+
+    matches = list(_DURATION_PATTERN.finditer(text))
+    if not matches:
+        return None
+
+    values = set()
+    factors = {
+        "day": 1,
+        "week": 7,
+        "month": 30,
+        "year": 365,
+    }
+
+    for match in matches:
+        amount = float(match.group("amount"))
+        unit = match.group("unit").casefold().rstrip("s")
+        days = amount * factors[unit]
+
+        if not math.isfinite(days) or days <= 0:
+            return None
+
+        values.add(days)
+
+    return next(iter(values)) if len(values) == 1 else None
+
+
 def collect_goal_clarifications(
     situation: str,
     *,
@@ -89,6 +239,15 @@ def collect_goal_clarifications(
             ).strip().casefold()
 
             domain = DOMAIN_ALIASES.get(answer)
+
+            # Accept descriptive answers such as "for interviews" by using
+            # the existing detector instead of requiring an exact label.
+            if domain is None:
+                answer_mission = detect_mission(answer)
+                detected_domain = answer_mission.get("domain")
+                if detected_domain in DOMAIN_LABELS:
+                    domain = detected_domain
+
             if domain:
                 break
 
@@ -129,47 +288,68 @@ def collect_goal_clarifications(
         "(Press Enter to leave this unspecified): "
     ).strip() or None
 
-    daily_raw = ask(
-        "How many minutes per day can you realistically spend? "
-        "(1-1440; Enter uses 120): "
-    ).strip()
-
-    if not daily_raw:
-        daily_capacity_minutes = 120
+    detected_daily_capacity = _extract_daily_capacity_minutes(original)
+    if detected_daily_capacity is not None:
+        daily_capacity_minutes = detected_daily_capacity
+        output(
+            "Using stated daily availability: "
+            f"{daily_capacity_minutes} minutes per day."
+        )
     else:
-        while True:
-            try:
-                daily_capacity_minutes = int(daily_raw)
-            except ValueError:
-                daily_capacity_minutes = 0
+        daily_raw = ask(
+            "How many minutes per day can you realistically spend? "
+            "(1-1440; e.g. 30 minutes per day; Enter uses 120): "
+        ).strip()
 
-            if 1 <= daily_capacity_minutes <= 1440:
-                break
+        if not daily_raw:
+            daily_capacity_minutes = 120
+        else:
+            while True:
+                parsed_capacity = _parse_daily_capacity_input(daily_raw)
+                if parsed_capacity is not None:
+                    daily_capacity_minutes = parsed_capacity
+                    break
 
-            daily_raw = ask(
-                "Enter a whole number from 1 to 1440, or press Enter for 120: "
-            ).strip()
+                daily_raw = ask(
+                    "Enter a value from 1 to 1440 minutes, "
+                    "e.g. '30 minutes per day', or press Enter for 120: "
+                ).strip()
 
-            if not daily_raw:
-                daily_capacity_minutes = 120
-                break
+                if not daily_raw:
+                    daily_capacity_minutes = 120
+                    break
 
     # These are the hard constraints currently supported by the decision engine.
     constraints: dict[str, float] = {}
 
-    max_cost = _ask_optional_number(
-        ask, output,
-        "What is your maximum budget in INR? (Enter to skip): ",
-        0,
-    )
+    detected_budget = _extract_max_budget_inr(original)
+    if detected_budget is None:
+        max_cost = _ask_optional_number(
+            ask, output,
+            "What is your maximum budget in INR? (Enter to skip): ",
+            0,
+        )
+    else:
+        max_cost = detected_budget
+        output(f"Using stated maximum budget: INR {max_cost:g}.")
+
     if max_cost is not None:
         constraints["max_cost"] = max_cost
 
-    max_duration = _ask_optional_number(
-        ask, output,
-        "What is the maximum acceptable duration in days? (Enter to skip): ",
-        0,
-    )
+    inferred_duration = _extract_duration_days(deadline)
+    if inferred_duration is None:
+        max_duration = _ask_optional_number(
+            ask, output,
+            "What is the maximum acceptable duration in days? (Enter to skip): ",
+            0,
+        )
+    else:
+        max_duration = inferred_duration
+        output(
+            "Using stated deadline as maximum duration: "
+            f"{max_duration:g} days."
+        )
+
     if max_duration is not None:
         constraints["max_duration_days"] = max_duration
 
